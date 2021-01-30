@@ -2,15 +2,26 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"os"
 	"strings"
 
+	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/gookit/color.v1"
 )
 
 func main() {
+
+	width, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		log.Fatalf("cannot get terminal size")
+	}
+
+	stopat := len(colors)
+	size := 0
 	// color names
-	for _, v := range colors {
+	for k, v := range colors {
 		clr := p.Get500(v)
 
 		rgb := color.HexToRGB(clr)
@@ -37,13 +48,18 @@ func main() {
 		}
 
 		fg := color.RGB(r, g, b, true)
+		size += len(v)
+		if size > width {
+			stopat = k
+			break
+		}
 		bg.Print(fg.Sprint(v))
 	}
 	fmt.Println()
 
 	// actual colors
 	for _, s := range order {
-		for _, v := range colors {
+		for _, v := range colors[:stopat] {
 			if len(p[v][s]) > 0 {
 				rgb := color.HexToRGB(p[v][s])
 				r, g, b := uint8(rgb[0]), uint8(rgb[1]), uint8(rgb[2])
