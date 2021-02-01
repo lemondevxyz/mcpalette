@@ -20,7 +20,7 @@ const (
 	FormatHSL
 )
 
-func print_palette(f Format, p Palette) {
+func print_palette(f Format, cs []string) {
 
 	colorlen := 0
 	if f == FormatHEX {
@@ -36,11 +36,11 @@ func print_palette(f Format, p Palette) {
 		log.Fatalf("cannot get terminal size")
 	}
 
-	stopat := len(colors)
+	stopat := len(cs)
 	size := 0
 	// color names
-	for k, v := range colors {
-		hex := p.Get500(v)
+	for k, v := range cs {
+		hex := material.Get500(v)
 
 		clr, err := colorful.Hex(hex)
 		if err != nil {
@@ -95,9 +95,9 @@ func print_palette(f Format, p Palette) {
 
 	// actual colors
 	for _, s := range order {
-		for _, v := range colors[:stopat] {
-			if len(p[v][s]) > 0 {
-				clr, err := colorful.Hex(p[v][s])
+		for _, v := range cs[:stopat] {
+			if len(material[v][s]) > 0 {
+				clr, err := colorful.Hex(material[v][s])
 				if err != nil {
 					continue
 				}
@@ -124,7 +124,7 @@ func print_palette(f Format, p Palette) {
 
 				str := ""
 				if f == FormatHEX {
-					str = p[v][s][1:]
+					str = material[v][s][1:]
 				} else if f == FormatRGB {
 					str = fmt.Sprintf("%03d, %03d, %03d", r, g, b)
 				} else if f == FormatHSL {

@@ -9,6 +9,8 @@ var colorfilter = ""
 
 func main() {
 
+	clr := ""
+
 	f := FormatHEX
 	rgb := false
 	hsl := false
@@ -27,6 +29,11 @@ func main() {
 		flag.BoolVar(&hsl, "hsl", false, fu)
 		flag.BoolVar(&hsl, "h", false, fu+" (shorthand)")
 	}
+	{
+		const fu = `print specific colors: "red, blue" or "1, 3, 4" or "red:lightgreen" or "5:7" - invalid data will be skipped without throwing an error`
+		flag.StringVar(&clr, "color", "", fu)
+		flag.StringVar(&clr, "c", "", fu+" (shorthand)")
+	}
 	flag.Parse()
 
 	if rgb == true {
@@ -35,6 +42,10 @@ func main() {
 		f = FormatHSL
 	}
 
-	//print_palette(FormatRGB, material)
-	print_palette(f, material)
+	cs := colors
+	if len(clr) > 0 {
+		cs = Query(clr)
+	}
+
+	print_palette(f, cs)
 }
