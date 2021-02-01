@@ -17,7 +17,7 @@ var order = []string{"050", "100", "200", "300", "400", "500", "600", "700", "80
 var colors = []string{"red", "pink", "purple", "deeppurple", "indigo", "blue", "lightblue", "cyan", "teal", "green", "lightgreen", "lime", "yellow", "amber", "orange", "deeporange", "brown", "grey", "bluegrey"}
 
 var (
-	p = Palette{
+	material = Palette{
 		"red": {
 			"050":  "#ffebee",
 			"100":  "#ffcdd2",
