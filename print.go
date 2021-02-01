@@ -7,11 +7,29 @@ import (
 	"os"
 	"strings"
 
+	colorful "github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/gookit/color.v1"
 )
 
-func print_palette(p Palette) {
+type Format uint8
+
+const (
+	FormatHEX Format = iota
+	FormatRGB
+	FormatHSL
+)
+
+func print_palette(f Format, p Palette) {
+
+	colorlen := 0
+	if f == FormatHEX {
+		colorlen = 6
+	} else if f == FormatRGB {
+		colorlen = 18 - 5
+	} else if f == FormatHSL {
+		colorlen = 20 - 5
+	}
 
 	width, _, err := terminal.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
@@ -22,34 +40,48 @@ func print_palette(p Palette) {
 	size := 0
 	// color names
 	for k, v := range colors {
-		clr := p.Get500(v)
+		hex := p.Get500(v)
 
-		rgb := color.HexToRGB(clr)
-		r, g, b := uint8(rgb[0]), uint8(rgb[1]), uint8(rgb[2])
-
-		x := (6 - len(v))
-
-		space := " "
-		if x > 0 {
-			space = strings.Repeat(space, x)
+		clr, err := colorful.Hex(hex)
+		if err != nil {
+			continue
 		}
-		name := v
 
-		v = space + v + space
-		if len(name) <= 6 && len(v) > 8 {
-			v = v[:8]
-		} else if len(name) <= 5 && len(v) < 8 {
-			v += strings.Repeat(" ", 8-len(v))
+		r, g, b := clr.RGB255()
+
+		fl := float64(colorlen-len(v)) / 2
+		x := 0
+
+		left := " "
+		right := " "
+		if fl > 0 {
+			x = int(fl)
+			left = strings.Repeat(left, x+1)
+			if math.Mod(fl, 1) != 0 {
+				x++
+			}
+
+			right = strings.Repeat(right, x+1)
 		}
+		//name := v
+
+		v = left + v + right
 
 		bg := color.RGB(255, 255, 255, false)
 		if ((float64(r)*0.299 + float64(g)*0.587 + float64(b)*0.114) / 255) > 0.5 {
 			bg = color.RGB(0, 0, 0, false)
 		}
 
+		y := len(v)
+		if len(v) < colorlen {
+			y = colorlen
+		}
 		fg := color.RGB(r, g, b, true)
-		size += len(v)
+
+		size += y
+
 		if size > width {
+			size = size - y
 			stopat = k
 			break
 		}
@@ -65,8 +97,12 @@ func print_palette(p Palette) {
 	for _, s := range order {
 		for _, v := range colors[:stopat] {
 			if len(p[v][s]) > 0 {
-				rgb := color.HexToRGB(p[v][s])
-				r, g, b := uint8(rgb[0]), uint8(rgb[1]), uint8(rgb[2])
+				clr, err := colorful.Hex(p[v][s])
+				if err != nil {
+					continue
+				}
+
+				r, g, b := clr.RGB255()
 
 				fg := color.RGB(255, 255, 255, false)
 				if ((float64(r)*0.299 + float64(g)*0.587 + float64(b)*0.114) / 255) > 0.5 {
@@ -76,7 +112,7 @@ func print_palette(p Palette) {
 				left := " "
 				right := " "
 
-				fl := float64((len(v) - 6)) / 2
+				fl := float64((len(v) - colorlen)) / 2
 				if fl > 0 {
 					x := int(fl)
 					left = strings.Repeat(left, x+1)
@@ -86,7 +122,19 @@ func print_palette(p Palette) {
 					right = strings.Repeat(right, x+1)
 				}
 
-				str := left + p[v][s][1:] + right
+				str := ""
+				if f == FormatHEX {
+					str = p[v][s][1:]
+				} else if f == FormatRGB {
+					str = fmt.Sprintf("%03d, %03d, %03d", r, g, b)
+				} else if f == FormatHSL {
+					h, s, l := clr.Hsl()
+
+					//str = "not implemented"
+					str = fmt.Sprintf("%03.0f, %03.0f%%, %03.0f%%", h, s*100, l*100)
+				}
+
+				str = left + str + right
 				if !monochrome {
 					str = fg.Sprint(color.RGB(r, g, b, true).Sprint(str))
 				}
